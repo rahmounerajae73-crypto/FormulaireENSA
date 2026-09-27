@@ -410,7 +410,7 @@
 <div class="container">
   <div class="card" id="formCard"></div>
 </div>
- <script>
+<script>
 // ─── State ──────────────────────────────────────────────────────────────────
 const CURRENT_YEAR = new Date().getFullYear();
 const MONTHS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
@@ -738,21 +738,12 @@ function handleSubmit() {
     materielsSci:     state.materielsSci,
   };
 
-  // ── Sauvegarde dans Google Sheets (via formulaire + iframe caché,
-  //    pour éviter que le navigateur ne transforme le POST en GET
-  //    lors de la redirection interne de Google Apps Script) ──
-  const iframeForm = document.createElement('form');
-  iframeForm.action = SHEETS_URL;
-  iframeForm.method = 'POST';
-  iframeForm.target = 'hiddenSheetFrame';
-  const payloadInput = document.createElement('input');
-  payloadInput.type = 'hidden';
-  payloadInput.name = 'payload';
-  payloadInput.value = JSON.stringify(response);
-  iframeForm.appendChild(payloadInput);
-  document.body.appendChild(iframeForm);
-  iframeForm.submit();
-  document.body.removeChild(iframeForm);
+  // ── Sauvegarde dans Google Sheets (FormData, sans no-cors) ──
+  const formData = new FormData();
+  formData.append('payload', JSON.stringify(response));
+  fetch(SHEETS_URL, { method: 'POST', body: formData })
+    .then(() => {})
+    .catch(err => console.error('Sheets error:', err));
 
   // ── Backup localStorage ──
   const existing = JSON.parse(localStorage.getItem('esc_responses') || '[]');
@@ -765,6 +756,7 @@ function handleSubmit() {
     <div class="success">
       <div class="success-icon">✓</div>
       <h2>Merci, ${state.firstName} !</h2>
+      <p>Vos informations ont bien été enregistrées.<br>Elles contribueront à améliorer l'accompagnement<br>des futurs diplômés de SupMTI.</p>
     </div>
   `;
 }
@@ -772,7 +764,6 @@ function handleSubmit() {
 // ─── Init
 renderStep();
 </script>
-<iframe name="hiddenSheetFrame" style="display:none;"></iframe>
 </body>
 </html>
 
