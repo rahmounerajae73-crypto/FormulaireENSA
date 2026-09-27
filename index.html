@@ -410,8 +410,7 @@
 <div class="container">
   <div class="card" id="formCard"></div>
 </div>
- 
-<script>
+ <script>
 // ─── State ──────────────────────────────────────────────────────────────────
 const CURRENT_YEAR = new Date().getFullYear();
 const MONTHS = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
@@ -447,7 +446,7 @@ const MATERIEL_TYPES = [
   { key:'materielsSci',  label:'Matériel scientifique',  listId:'materielSciList',  addId:'addMaterielSci',  placeholder:'Ex : Microscope',              empty:'' },
 ];
 const RESOURCE_TYPES = [
-  { key:'structures', label:'Structure', listId:'structureList', addId:'addStructure', placeholder:'Ex : Incubateur ', empty:'Aucune structure ajoutée.' },
+  { key:'structures', label:'Structure', listId:'structureList', addId:'addStructure', placeholder:'Ex : Incubateur SupMTI', empty:'Aucune structure ajoutée.' },
   { key:'salles',     label:'Salle',     listId:'salleList',     addId:'addSalle',     placeholder:'Ex : Salle B12',          empty:'Aucune salle ajoutée.' },
   { key:'projets',    label:'Projet',    listId:'projetList',    addId:'addProjet',    placeholder:'Ex : Application mobile X', empty:'Aucun projet ajouté.' },
 ];
@@ -739,13 +738,21 @@ function handleSubmit() {
     materielsSci:     state.materielsSci,
   };
 
-  // ── Sauvegarde dans Google Sheets ──
-  fetch(SHEETS_URL, {
-    method: "POST",
-    mode: "no-cors",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(response),
-  }).catch(err => console.error("Sheets error:", err));
+  // ── Sauvegarde dans Google Sheets (via formulaire + iframe caché,
+  //    pour éviter que le navigateur ne transforme le POST en GET
+  //    lors de la redirection interne de Google Apps Script) ──
+  const iframeForm = document.createElement('form');
+  iframeForm.action = SHEETS_URL;
+  iframeForm.method = 'POST';
+  iframeForm.target = 'hiddenSheetFrame';
+  const payloadInput = document.createElement('input');
+  payloadInput.type = 'hidden';
+  payloadInput.name = 'payload';
+  payloadInput.value = JSON.stringify(response);
+  iframeForm.appendChild(payloadInput);
+  document.body.appendChild(iframeForm);
+  iframeForm.submit();
+  document.body.removeChild(iframeForm);
 
   // ── Backup localStorage ──
   const existing = JSON.parse(localStorage.getItem('esc_responses') || '[]');
@@ -758,6 +765,7 @@ function handleSubmit() {
     <div class="success">
       <div class="success-icon">✓</div>
       <h2>Merci, ${state.firstName} !</h2>
+      <p>Vos informations ont bien été enregistrées.<br>Elles contribueront à améliorer l'accompagnement<br>des futurs diplômés de SupMTI.</p>
     </div>
   `;
 }
@@ -765,5 +773,7 @@ function handleSubmit() {
 // ─── Init
 renderStep();
 </script>
+<iframe name="hiddenSheetFrame" style="display:none;"></iframe>
 </body>
 </html>
+
