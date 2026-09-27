@@ -484,6 +484,7 @@ function renderProgress() {
   pb.innerHTML = '';
   STEPS.forEach((label, i) => {
     const item = el('div','step-item');
+    item.style.cursor = 'pointer';
     const dotClass = i < state.step ? 'done' : i === state.step ? 'active' : 'pending';
     const dot = el('div', `step-dot ${dotClass}`);
     dot.innerHTML = i < state.step ? '✓' : String(i+1);
@@ -491,6 +492,7 @@ function renderProgress() {
     lbl.textContent = label;
     item.appendChild(dot);
     item.appendChild(lbl);
+    item.addEventListener('click', () => { state.step = i; renderStep(); });
     pb.appendChild(item);
     if (i < STEPS.length - 1) {
       const line = el('div', `step-line ${i < state.step ? 'done' : ''}`);
@@ -707,14 +709,7 @@ function addNav(card, isLast=false) {
 function updateNav() {
   const btn = document.getElementById('btnNext');
   if (!btn) return;
-  const valid = [
-    () => !!state.firstName && !!state.lastName && !!state.team,
-    () => RESOURCE_TYPES.every(rt => !!(state[rt.key][0] && state[rt.key][0].nom.trim())),
-    () => MATERIEL_TYPES.every(rt => !!(state[rt.key][0] && state[rt.key][0].nom.trim())),
-    () => !!(state.theses[0] && state.theses[0].sujet.trim()),
-    () => true,
-  ][state.step]();
-  btn.disabled = !valid;
+  btn.disabled = false;
 }
  
 // ─── Submit ───────────────────────────────────────────────────────────────────
@@ -756,7 +751,6 @@ function handleSubmit() {
     <div class="success">
       <div class="success-icon">✓</div>
       <h2>Merci, ${state.firstName} !</h2>
-      <p><koki/p>
     </div>
   `;
 }
@@ -766,4 +760,3 @@ renderStep();
 </script>
 </body>
 </html>
-
